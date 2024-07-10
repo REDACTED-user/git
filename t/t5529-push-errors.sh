@@ -2,6 +2,9 @@
 
 test_description='detect some push errors early (before contacting remote)'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
@@ -36,6 +39,13 @@ test_expect_success 'detect missing sha1 expressions early' '
 	echo no >expect &&
 	test_must_fail git push origin main~2:main &&
 	test_cmp expect rp-ran
+'
+
+# We need to use an existing local_ref so that the remote is mapped to
+# it in 'builtin/push.c:set_refspecs()'.
+test_expect_success 'detect empty remote' '
+	test_must_fail git push "" main 2> stderr &&
+	grep "fatal: bad repository ${SQ}${SQ}" stderr
 '
 
 test_expect_success 'detect ambiguous refs early' '
